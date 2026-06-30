@@ -1,0 +1,21 @@
+name: notiflow_go_router
+description: "GoRouter navigation adapter for NotiFlow."
+version: 0.0.1
+homepage: https://github.com/your-org/notiflow
+repository: https://github.com/your-org/notiflow/tree/main/packages/notiflow_go_router
+
+environment:
+  sdk: ^3.12.2
+  flutter: ">=3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  notiflow:
+    path: ../notiflow
+  go_router: ^14.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0

@@ -20,7 +20,7 @@ import 'notification_source.dart';
 ///   });
 /// }
 /// ```
-abstract class NotiflowNotification {
+abstract base class NotiflowNotification {
   /// ID unik notifikasi — diambil dari [NotificationEvent.id].
   final String id;
 

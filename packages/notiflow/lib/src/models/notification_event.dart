@@ -59,8 +59,8 @@ class NotificationEvent {
     required this.payload,
     DateTime? receivedAt,
     this.metadata = const {},
-  })  : id = id ?? _generateId(),
-        receivedAt = receivedAt ?? DateTime.now();
+  }) : id = id ?? _generateId(),
+       receivedAt = receivedAt ?? DateTime.now();
 
   static int _counter = 0;
 

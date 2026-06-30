@@ -20,7 +20,7 @@
 ///   }
 /// }
 /// ```
-abstract class NotiflowNavigator {
+abstract interface class NotiflowNavigator {
   /// Navigate ke [route] dengan optional [arguments].
   ///
   /// Ekuivalen dengan `Navigator.pushNamed()` atau `GoRouter.go()`.

@@ -1,0 +1,19 @@
+name: notiflow
+description: "Notification Runtime Framework for Flutter — Handle, Observe, Debug, Dispatch."
+version: 0.0.1
+homepage: https://github.com/your-org/notiflow
+repository: https://github.com/your-org/notiflow
+issue_tracker: https://github.com/your-org/notiflow/issues
+
+environment:
+  sdk: ^3.12.2
+  flutter: ">=3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0

@@ -1,0 +1,21 @@
+name: notiflow_onesignal
+description: "OneSignal plugin for NotiFlow — auto-listen to OneSignal notification events."
+version: 0.0.1
+homepage: https://github.com/your-org/notiflow
+repository: https://github.com/your-org/notiflow/tree/main/packages/notiflow_onesignal
+
+environment:
+  sdk: ^3.12.2
+  flutter: ">=3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  notiflow:
+    path: ../notiflow
+  onesignal_flutter: ^5.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0

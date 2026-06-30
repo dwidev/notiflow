@@ -42,6 +42,7 @@ export 'src/models/notification_state.dart';
 export 'src/models/notiflow_notification.dart';
 
 // Interfaces
+export 'src/interfaces/inotiflow.dart';
 export 'src/interfaces/notiflow_handler.dart';
 export 'src/interfaces/notiflow_middleware.dart';
 export 'src/interfaces/notiflow_navigator.dart';
