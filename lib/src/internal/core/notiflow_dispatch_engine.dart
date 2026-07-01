@@ -1,5 +1,5 @@
-import 'package:notiflow/src/internal/types.dart';
-import 'package:notiflow/notiflow.dart';
+import '../../../notiflow.dart';
+import '../types.dart';
 
 typedef NotiflowDispatchEngine = _NotiflowDispatchEngine;
 
@@ -14,7 +14,6 @@ typedef NotiflowDispatchEngine = _NotiflowDispatchEngine;
 final class _NotiflowDispatchEngine {
   final List<NotiflowMiddleware> _middlewares = [];
 
-  // Chain sudah di-build — siap dipakai
   _ChainNode? _headChain;
   bool _isDirty = true;
 

@@ -1,5 +1,6 @@
-import 'package:notiflow/notiflow.dart';
-
+import '../../../notiflow.dart';
+import '../../interfaces/notiflow_handler.dart';
+import '../../interfaces/notiflow_parser.dart';
 import '../core/notiflow_entry.dart';
 
 /// Internal registry — menyimpan semua entry dan mencari handler yang cocok.
@@ -20,7 +21,7 @@ final class _NotiflowRegistry {
   NotiflowHandler<NotiflowNotification>? _fallbackHandler;
 
   void register<T extends NotiflowNotification>({
-    required bool Function(NotificationEvent) matcher,
+    required bool Function(NotificationEvent event) matcher,
     required NotiflowParser<T> parser,
     required NotiflowHandler<T> handler,
   }) {
@@ -123,12 +124,7 @@ final class _NotiflowRegistry {
 // Internal fallback notification wrapper
 final class _FallbackNotification extends NotiflowNotification {
   _FallbackNotification(NotificationEvent event)
-    : super(
-        id: event.id,
-        receivedAt: event.receivedAt,
-        source: event.source,
-        rawData: event.payload,
-      );
+    : super(id: event.id, receivedAt: event.receivedAt, rawData: event.payload);
 }
 
 typedef NotiflowRegistry = _NotiflowRegistry;

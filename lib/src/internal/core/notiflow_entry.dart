@@ -1,4 +1,6 @@
-import 'package:notiflow/notiflow.dart';
+import '../../../notiflow.dart';
+import '../../interfaces/notiflow_handler.dart';
+import '../../interfaces/notiflow_parser.dart';
 
 // Alias internal — tidak di-export ke public API
 typedef NotiflowEntry<T extends NotiflowNotification> = _NotiflowEntry<T>;
@@ -8,7 +10,7 @@ typedef NotiflowEntry<T extends NotiflowNotification> = _NotiflowEntry<T>;
 /// Sealed agar tidak bisa di-extend dari luar package.
 /// `base` memastikan tidak ada implementasi publik.
 base class _NotiflowEntry<T extends NotiflowNotification> {
-  final bool Function(NotificationEvent) matcher;
+  final bool Function(NotificationEvent event) matcher;
   final NotiflowParser<T> parser;
   final NotiflowHandler<T> handler;
 

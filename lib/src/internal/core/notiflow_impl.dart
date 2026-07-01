@@ -1,9 +1,12 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-import 'package:notiflow/notiflow.dart';
+
+import '../../../notiflow.dart';
+import '../../interfaces/notiflow_handler.dart';
 import '../exceptions/navigator_exception.dart';
-import 'notiflow_dispatch_engine.dart';
 import '../registry/notiflow_registry.dart';
+import '../routes/router_handler.dart';
+import '../routes/router_parser.dart';
+import 'notiflow_dispatch_engine.dart';
 
 // Internal typedef — tidak di-export
 typedef NotiflowInstance = _NotiflowImpl;
@@ -41,11 +44,16 @@ final class _NotiflowImpl implements Notiflow {
 
   @override
   Notiflow register<T extends NotiflowNotification>({
-    required bool Function(NotificationEvent event) matcher,
-    required NotiflowParser<T> parser,
-    required NotiflowHandler<T> handler,
+    required NotiflowRoute route,
   }) {
-    _registry.register<T>(matcher: matcher, parser: parser, handler: handler);
+    final parser = RouterParser<T>(parser: route.parse);
+    final handler = RouterHandler<T>(lifecycle: route.lifecycle);
+
+    _registry.register<T>(
+      matcher: route.matcher,
+      parser: parser,
+      handler: handler,
+    );
     return this;
   }
 

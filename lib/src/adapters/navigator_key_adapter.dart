@@ -39,12 +39,12 @@ class NavigatorKeyAdapter implements NotiflowNavigator {
   }
 
   @override
-  Future<void> navigateTo(String route, {Object? arguments}) async {
+  Future<void> push(String route, {Object? arguments}) async {
     await _navigator.pushNamed(route, arguments: arguments);
   }
 
   @override
-  Future<void> navigateAndReplace(String route, {Object? arguments}) async {
+  Future<void> pushAndReplace(String route, {Object? arguments}) async {
     await _navigator.pushReplacementNamed(route, arguments: arguments);
   }
 

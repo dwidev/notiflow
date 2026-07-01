@@ -1,9 +1,12 @@
 import 'dart:developer';
 
 import 'package:flutter/foundation.dart' show kDebugMode;
-import 'package:notiflow/notiflow.dart';
 
+import '../interfaces/notiflow_middleware.dart';
 import '../internal/types.dart';
+import '../models/notification_event.dart';
+
+export '../interfaces/notiflow_middleware.dart';
 
 part 'analytic_middleware.dart';
 part 'duplicated_middleware.dart';

@@ -1,10 +1,10 @@
 import '../internal/core/notiflow_impl.dart';
+import '../internal/routes/notiflow_route.dart';
 import '../models/notification_event.dart';
 import '../models/notiflow_notification.dart';
 import 'notiflow_handler.dart';
 import 'notiflow_middleware.dart';
 import 'notiflow_navigator.dart';
-import 'notiflow_parser.dart';
 
 /// Public interface NotiFlow — satu-satunya yang developer lihat dan gunakan.
 ///
@@ -56,9 +56,7 @@ abstract interface class Notiflow {
 
   /// Daftarkan tipe notifikasi beserta parser dan handler-nya.
   Notiflow register<T extends NotiflowNotification>({
-    required bool Function(NotificationEvent event) matcher,
-    required NotiflowParser<T> parser,
-    required NotiflowHandler<T> handler,
+    required NotiflowRoute<T> route,
   });
 
   /// Set handler fallback untuk tipe yang tidak dikenali.

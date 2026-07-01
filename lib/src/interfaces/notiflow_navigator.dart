@@ -24,12 +24,12 @@ abstract interface class NotiflowNavigator {
   /// Navigate ke [route] dengan optional [arguments].
   ///
   /// Ekuivalen dengan `Navigator.pushNamed()` atau `GoRouter.go()`.
-  Future<void> navigateTo(String route, {Object? arguments});
+  Future<void> push(String route, {Object? arguments});
 
   /// Navigate ke [route] dan replace halaman saat ini.
   ///
   /// Ekuivalen dengan `Navigator.pushReplacementNamed()` atau `GoRouter.replace()`.
-  Future<void> navigateAndReplace(String route, {Object? arguments});
+  Future<void> pushAndReplace(String route, {Object? arguments});
 
   /// Pop semua halaman hingga [route].
   ///

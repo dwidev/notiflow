@@ -1,16 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:notiflow/notiflow.dart';
 
-import 'notifications/chat_notification.dart';
-import 'notifications/order_notification.dart';
-import 'notifications/promo_notification.dart';
+import 'models/chat_notification.dart';
 import 'pages/home_page.dart';
 import 'pages/chat_page.dart';
 import 'pages/order_page.dart';
 import 'pages/promo_page.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
-
+final chatRoute = NotiflowRoute<ChatNotification>(
+  matcher: (event) => event.payload['type'] == 'chat',
+  parse: (event) {
+    return ChatNotification(
+      id: event.id,
+      receivedAt: event.receivedAt,
+      rawData: event.payload,
+      type: event.payload['type'] as String,
+    );
+  },
+  lifecycle: NotiflowLifecycle(
+    onForeground: (event, navigator) async {
+      await navigator.push('/chat');
+    },
+    onLaunch: (event, navigator) async {
+      await navigator.push('/chat');
+    },
+    onOpened: (event, navigator) async {
+      await navigator.push('/chat');
+    },
+  ),
+);
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -19,21 +38,7 @@ void main() {
       .setNavigator(NavigatorKeyAdapter(navigatorKey: navigatorKey))
       .addMiddleware(LoggingMiddleware(tag: 'NotiFlow'))
       .addMiddleware(DeduplicationMiddleware())
-      .register<ChatNotification>(
-        matcher: (event) => event.payload['type'] == 'chat',
-        parser: ChatNotificationParser(),
-        handler: ChatNotificationHandler(),
-      )
-      .register<OrderNotification>(
-        matcher: (event) => event.payload['type'] == 'order',
-        parser: OrderNotificationParser(),
-        handler: OrderNotificationHandler(),
-      )
-      .register<PromoNotification>(
-        matcher: (event) => event.payload['type'] == 'promo',
-        parser: PromoNotificationParser(),
-        handler: PromoNotificationHandler(),
-      );
+      .register(route: chatRoute);
 
   runApp(const NotiflowExampleApp());
 }
