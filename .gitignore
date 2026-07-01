@@ -19,9 +19,6 @@ migrate_working_dir/
 # VS Code
 #.vscode/
 
-#docs
-/docs/*
-
 # Flutter/Dart/Pub related
 **/doc/api/
 .dart_tool/
@@ -32,23 +29,13 @@ migrate_working_dir/
 /coverage/
 **/coverage/
 
-# Melos
-.melos/
-
-# Pub
+# Pub — libraries should not include pubspec.lock
 pubspec.lock
-**/*/pubspec.lock
-**/pubspec_overrides.yaml
 
 # Generated
 *.g.dart
 *.freezed.dart
 *.mocks.dart
+.metadata
 
-# Platform folders in examples (optional — uncomment if needed)
-# examples/**/android/
-# examples/**/ios/
-# examples/**/web/
-# examples/**/macos/
-# examples/**/windows/
-# examples/**/linux/
+docs/*

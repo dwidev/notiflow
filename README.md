@@ -27,6 +27,8 @@ The missing runtime layer between your notification provider and your Flutter ap
   <a href="#-testing">Testing</a>
 </p>
 
+_Single package. Full transparency. Zero magic._
+
 </div>
 
 ---
@@ -44,40 +46,38 @@ FirebaseMessaging.onMessageOpenedApp.listen((message) {
   } else if (type == 'order') {
     Navigator.pushNamed(context, '/order', arguments: message.data['order_id']);
   } else if (type == 'promo') { /* ... */ }
-  else if (type == 'payment') { /* ... */ }
   // keeps growing forever...
 });
 ```
 
 Modern apps make it worse — Firebase for push, OneSignal for marketing, local notifications for reminders — each with different APIs, different lifecycles, and zero shared abstractions.
 
-**NotiFlow was built to solve this.** It's a runtime framework that sits between *any* notification provider and your app logic. You register typed handlers, plug in a middleware pipeline, and let NotiFlow take care of routing, parsing, lifecycle management, and observability — all without coupling your app to a single provider.
+**NotiFlow was built to solve this.** It's a runtime framework that sits between _any_ notification provider and your app logic. You register typed handlers, plug in a middleware pipeline, and let NotiFlow take care of routing, parsing, lifecycle management, and observability.
 
-> NotiFlow is **not** a Firebase wrapper. It's **not** a push notification router.
-> It's the **Notification Runtime Framework** that Flutter has been missing.
+NotiFlow follows the **Alice Model** — like [Alice](https://pub.dev/packages/alice) opened HTTP inspection with one instance and one interceptor pattern, NotiFlow opens notification handling with one instance and one `dispatch()` call. No plugins, no black boxes, no magic.
+
+> **One package. You write the bridge. NotiFlow handles the rest.**
 
 ---
 
 ## ✨ Features
 
-| Feature | Description |
-|---|---|
-| **Provider Agnostic** | Works with Firebase, OneSignal, local notifications, or any custom provider. |
-| **Typed Notifications** | Raw payloads become compile-time safe Dart models. No more `payload['key']` typos. |
-| **Lifecycle Handlers** | Dedicated callbacks for `foreground`, `opened` (background), and `launch` (terminated). |
-| **Middleware Pipeline** | Logging, analytics, dedup, auth guards, queuing — chainable, ordered, with sealed results. |
+| Feature                   | Description                                                                                            |
+| ------------------------- | ------------------------------------------------------------------------------------------------------ |
+| **Provider Agnostic**     | Works with Firebase, OneSignal, local notifications, or any custom provider.                           |
+| **Typed Notifications**   | Raw payloads become compile-time safe Dart models. No more `payload['key']` typos.                     |
+| **Lifecycle Handlers**    | Dedicated callbacks for `foreground`, `opened` (background), and `launch` (terminated).                |
+| **Middleware Pipeline**   | Logging, analytics, dedup, auth guards, queuing — chainable, ordered, with sealed results.             |
 | **Navigator Abstraction** | Handlers navigate without `BuildContext`. Swap Navigator 1.0, GoRouter, or AutoRoute with one adapter. |
-| **High Performance** | Pre-built middleware chain (zero alloc dispatch), O(1) type-cache registry, ring buffer dedup, object pool. |
-| **Interface-Based** | Your code depends on `INotiFlow`, never on internals. Swap implementations freely. |
-| **Plugin Ecosystem** | Headless Mode for full control, Plugin Mode for zero-boilerplate setup. Mix both. |
-| **Testable** | `NotiFlow.create()` gives isolated instances — no Firebase mocks needed. |
-| **Inspector** *(roadmap)* | Real-time overlay UI showing middleware traces, handler results, and notification history. |
+| **High Performance**      | Pre-built middleware chain (zero alloc dispatch), O(1) type-cache registry, ring buffer dedup.         |
+| **Interface-Based**       | Your code depends on `Notiflow`, never on internals.                                                   |
+| **Full Transparency**     | No plugin magic. Every provider integration is code you write, read, and control.                      |
+| **Inspector** _(v0.2.0)_  | Built-in debug overlay — `Notiflow.instance.showInspector()` — like Alice for notifications.           |
+| **Testable**              | `Notiflow.create()` gives isolated instances — no Firebase mocks needed.                               |
 
 ---
 
 ## 📦 Installation
-
-Add NotiFlow to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
@@ -88,19 +88,17 @@ dependencies:
 flutter pub get
 ```
 
-Import it:
-
 ```dart
 import 'package:notiflow/notiflow.dart';
 ```
 
-> **Zero external dependencies.** NotiFlow core depends only on `flutter` — nothing else.
+> **Zero external dependencies.** NotiFlow depends only on `flutter` — nothing else. Provider dependencies (Firebase, OneSignal, etc.) stay in _your_ `pubspec.yaml`, not ours.
 
 ---
 
 ## 🚀 Quick Start
 
-Get running in **under 5 minutes**. Three steps: create a navigator key, configure NotiFlow, dispatch events.
+Three steps: create a navigator key, configure NotiFlow, bridge your provider.
 
 ```dart
 import 'package:flutter/material.dart';
@@ -112,7 +110,7 @@ void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
   // 1️⃣ Configure NotiFlow
-  NotiFlow.instance
+  Notiflow.instance
     .setNavigator(NavigatorKeyAdapter(navigatorKey: navigatorKey))
     .addMiddleware(LoggingMiddleware(tag: 'NotiFlow'))
     .addMiddleware(DeduplicationMiddleware())
@@ -122,47 +120,24 @@ void main() {
       handler: ChatNotificationHandler(),
     );
 
+  // 2️⃣ Bridge your provider — manual, transparent
+  FirebaseMessaging.onMessage.listen((message) {
+    Notiflow.instance.dispatch(NotificationEvent(
+      source: NotificationSource.firebase,
+      state: NotificationState.foreground,
+      payload: message.data,
+    ));
+  });
+
   runApp(const MyApp());
 }
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      navigatorKey: navigatorKey,
-      routes: {
-        '/': (_) => const HomePage(),
-        '/chat': (_) => const ChatPage(),
-      },
-    );
-  }
-}
 ```
 
-```dart
-// 2️⃣ Dispatch from any provider
-await NotiFlow.instance.dispatch(
-  NotificationEvent(
-    source: NotificationSource.firebase,
-    state: NotificationState.background,
-    payload: {
-      'type': 'chat',
-      'chat_id': 'room-123',
-      'sender_name': 'Aisha',
-    },
-  ),
-);
-```
-
-That's it. NotiFlow matches the event → parses it into `ChatNotification` → calls `onOpened()` on the handler → navigates to `/chat`.
+That's it. NotiFlow matches the event → parses it into `ChatNotification` → calls `onForeground()` on the handler.
 
 ---
 
 ## 🧠 Core Concepts
-
-NotiFlow's architecture is built around four primitives: **Events**, **Notifications**, **Parsers**, and **Handlers**.
 
 ```
 Provider (Firebase, OneSignal, etc.)
@@ -192,13 +167,10 @@ The unified entry point. Every provider's data gets converted into this single m
 
 ```dart
 NotificationEvent(
-  source: NotificationSource.firebase,   // where it came from
-  state: NotificationState.foreground,   // app lifecycle state
-  payload: message.data,                 // raw data
-  metadata: {                            // optional display info
-    'title': 'New message',
-    'body': 'Aisha sent you a photo',
-  },
+  source: NotificationSource.firebase,
+  state: NotificationState.foreground,
+  payload: message.data,
+  metadata: {'title': 'New message', 'body': 'Aisha sent a photo'},
 );
 ```
 
@@ -263,7 +235,7 @@ class ChatNotificationHandler extends NotiflowHandler<ChatNotification> {
     ChatNotification notification,
     NotiflowNavigator navigator,
   ) async {
-    // App is active — show in-app banner, update badge, etc.
+    // App is active — show in-app banner, update badge
   }
 
   @override
@@ -271,7 +243,6 @@ class ChatNotificationHandler extends NotiflowHandler<ChatNotification> {
     ChatNotification notification,
     NotiflowNavigator navigator,
   ) async {
-    // User tapped notification from background
     await navigator.navigateTo(
       '/chat',
       arguments: {'chatId': notification.chatId},
@@ -283,7 +254,6 @@ class ChatNotificationHandler extends NotiflowHandler<ChatNotification> {
     ChatNotification notification,
     NotiflowNavigator navigator,
   ) async {
-    // App was terminated — wait for UI, then navigate
     await Future<void>.delayed(const Duration(milliseconds: 300));
     await navigator.navigateTo(
       '/chat',
@@ -295,25 +265,23 @@ class ChatNotificationHandler extends NotiflowHandler<ChatNotification> {
 
 ### 5. Registration
 
-Bind everything together with `register()`:
-
 ```dart
-NotiFlow.instance.register<ChatNotification>(
+Notiflow.instance.register<ChatNotification>(
   matcher: (event) => event.payload['type'] == 'chat',
   parser: ChatNotificationParser(),
   handler: ChatNotificationHandler(),
 );
 ```
 
-Add as many notification types as you want — each in its own file, zero coupling between them.
+Add as many notification types as you want — each in its own file, zero coupling.
 
 ---
 
 ## 🔗 Middleware
 
-Middleware runs **in order** before the handler is invoked. Each middleware can pass the event forward, modify it, perform side effects, or **stop the pipeline entirely**.
+Middleware runs **in order** before the handler. Each middleware can pass, modify, side-effect, or **stop** the pipeline.
 
-### Writing Custom Middleware
+### Custom Middleware
 
 ```dart
 class AuthGuardMiddleware extends NotiflowMiddleware {
@@ -328,406 +296,171 @@ class AuthGuardMiddleware extends NotiflowMiddleware {
       return const MiddlewareStop(reason: 'user_not_authenticated');
     }
 
-    return next(event); // pass to next middleware
+    return next(event);
   }
 }
 ```
 
 ### Built-in Middleware
 
-| Middleware | Purpose | Key Options |
-|---|---|---|
-| `LoggingMiddleware` | Logs every event and pipeline duration to console. | `tag`, `enableInRelease` |
-| `DeduplicationMiddleware` | Prevents duplicate events using a ring buffer. | `windowDuration`, `bufferSize`, `keyExtractor` |
-| `AnalyticsMiddleware` | Sends events to your analytics provider. | `onTrack` callback |
-| `QueueMiddleware` | Holds events until your app is ready (auth, DB, etc.). | Call `.ready()` to flush |
-
-### Middleware Order Matters
-
-```dart
-NotiFlow.instance
-  .addMiddleware(LoggingMiddleware())        // 1. Log everything
-  .addMiddleware(DeduplicationMiddleware())  // 2. Drop duplicates
-  .addMiddleware(AuthGuardMiddleware())      // 3. Block if not logged in
-  .addMiddleware(AnalyticsMiddleware(...));  // 4. Track to analytics
-```
-
-### QueueMiddleware — Delay Until Ready
-
-```dart
-final queueMiddleware = QueueMiddleware();
-
-NotiFlow.instance.addMiddleware(queueMiddleware);
-
-// Later, after auth / DB / bootstrap is complete:
-await queueMiddleware.ready();
-```
+| Middleware                | Purpose                                                    |
+| ------------------------- | ---------------------------------------------------------- |
+| `LoggingMiddleware`       | Logs every event and pipeline duration.                    |
+| `DeduplicationMiddleware` | Prevents duplicate events (ring buffer).                   |
+| `AnalyticsMiddleware`     | Sends events to your analytics provider.                   |
+| `QueueMiddleware`         | Holds events until app is ready. Call `.ready()` to flush. |
 
 ---
 
 ## 🧭 Navigator
 
-NotiFlow decouples navigation from handlers via `NotiflowNavigator`. Swap your navigation library by changing **one adapter** — no handler changes needed.
-
 ### Navigator 1.0 (Built-in)
 
 ```dart
 final navigatorKey = GlobalKey<NavigatorState>();
-
-NotiFlow.instance.setNavigator(
+Notiflow.instance.setNavigator(
   NavigatorKeyAdapter(navigatorKey: navigatorKey),
 );
-
-// Pass navigatorKey to MaterialApp
-MaterialApp(navigatorKey: navigatorKey, /* ... */);
 ```
 
 ### GoRouter / AutoRoute / Custom
 
-Implement `CustomNavigatorAdapter` for any navigation library:
+Copy the adapter from the cookbook — no extra dependency needed:
 
-```dart
-class GoRouterAdapter extends CustomNavigatorAdapter {
-  const GoRouterAdapter({required this.router});
-  final GoRouter router;
+- [GoRouter Adapter](doc/cookbook/go_router_adapter.md)
+- [AutoRoute Adapter](doc/cookbook/auto_route_adapter.md)
 
-  @override
-  Future<void> navigateTo(String route, {Object? arguments}) async {
-    router.go(route, extra: arguments);
-  }
-
-  @override
-  Future<void> navigateAndReplace(String route, {Object? arguments}) async {
-    router.replace(route, extra: arguments);
-  }
-
-  @override
-  Future<void> popUntil(String route) async => router.popUntil(route);
-
-  @override
-  Future<void> pop<T>([T? result]) async => router.pop(result);
-
-  @override
-  Future<void> navigateAndClearStack(String route, {Object? arguments}) async {
-    router.go(route, extra: arguments);
-  }
-}
-```
-
-```dart
-NotiFlow.instance.setNavigator(GoRouterAdapter(router: appRouter));
-```
+Or implement `NotiflowNavigatorAdapter` yourself for any navigation library.
 
 ---
 
 ## 🔌 Provider Integration
 
-NotiFlow doesn't wrap providers — it consumes their data through `NotificationEvent`. Here's how to integrate common providers:
+NotiFlow doesn't wrap providers — you write the bridge. It's ~15 lines per provider, fully transparent, fully yours.
 
 ### Firebase Messaging
 
 ```dart
 // Foreground
 FirebaseMessaging.onMessage.listen((message) {
-  NotiFlow.instance.dispatch(
-    NotificationEvent(
-      source: NotificationSource.firebase,
-      state: NotificationState.foreground,
-      payload: message.data,
-      metadata: {
-        'title': message.notification?.title,
-        'body': message.notification?.body,
-      },
-    ),
-  );
+  Notiflow.instance.dispatch(NotificationEvent(
+    source: NotificationSource.firebase,
+    state: NotificationState.foreground,
+    payload: message.data,
+  ));
 });
 
 // Background (user tapped)
 FirebaseMessaging.onMessageOpenedApp.listen((message) {
-  NotiFlow.instance.dispatch(
-    NotificationEvent(
-      source: NotificationSource.firebase,
-      state: NotificationState.background,
-      payload: message.data,
-    ),
-  );
+  Notiflow.instance.dispatch(NotificationEvent(
+    source: NotificationSource.firebase,
+    state: NotificationState.background,
+    payload: message.data,
+  ));
 });
 
 // Terminated (app launched via notification)
 final initial = await FirebaseMessaging.instance.getInitialMessage();
 if (initial != null) {
-  NotiFlow.instance.dispatch(
-    NotificationEvent(
-      source: NotificationSource.firebase,
-      state: NotificationState.launch,
-      payload: initial.data,
-    ),
-  );
+  Notiflow.instance.dispatch(NotificationEvent(
+    source: NotificationSource.firebase,
+    state: NotificationState.launch,
+    payload: initial.data,
+  ));
 }
 ```
 
-### OneSignal
+### Extension Method (optional shorthand)
 
 ```dart
-OneSignal.shared.setNotificationReceivedHandler((notif) {
-  NotiFlow.instance.dispatch(
-    NotificationEvent(
-      source: NotificationSource.oneSignal,
+FirebaseMessaging.onMessage.listen((message) {
+  Notiflow.instance.dispatch(
+    message.data.toNotificationEvent(
+      source: NotificationSource.firebase,
       state: NotificationState.foreground,
-      payload: Map<String, dynamic>.from(notif.additionalData ?? {}),
-    ),
-  );
-});
-
-OneSignal.shared.setNotificationOpenedHandler((result) {
-  NotiFlow.instance.dispatch(
-    NotificationEvent(
-      source: NotificationSource.oneSignal,
-      state: NotificationState.background,
-      payload: Map<String, dynamic>.from(
-        result.notification.additionalData ?? {},
-      ),
     ),
   );
 });
 ```
 
-### Any Provider
+### More Providers
 
-As long as you can produce a `Map<String, dynamic>`, NotiFlow can handle it:
+Full copy-paste recipes in the cookbook:
 
-```dart
-MyCustomProvider.onEvent.listen((event) {
-  NotiFlow.instance.dispatch(
-    NotificationEvent(
-      source: NotificationSource.custom,
-      state: NotificationState.foreground,
-      payload: event.toMap(),
-    ),
-  );
-});
-```
-
----
-
-## ⚡ Two Modes of Operation
-
-### Headless Mode
-
-You manually receive events from providers and call `dispatch()`. Full control, zero magic.
-
-```dart
-NotiFlow.instance
-  .setNavigator(NavigatorKeyAdapter(navigatorKey: navigatorKey))
-  .addMiddleware(LoggingMiddleware())
-  .register<ChatNotification>(
-    matcher: (event) => event.payload['type'] == 'chat',
-    parser: ChatNotificationParser(),
-    handler: ChatNotificationHandler(),
-  );
-
-// You handle Firebase/OneSignal/etc. yourself
-FirebaseMessaging.onMessage.listen((msg) {
-  NotiFlow.instance.dispatch(NotificationEvent(/* ... */));
-});
-```
-
-**Best for:** existing projects, custom providers, maximum flexibility.
-
-### Plugin Mode *(coming soon)*
-
-Plugins auto-listen to providers — zero boilerplate setup.
-
-```dart
-await NotiFlow.instance
-  .setNavigator(NavigatorKeyAdapter(navigatorKey: navigatorKey))
-  .addPlugin(NotiflowFirebasePlugin(messaging: FirebaseMessaging.instance))
-  .addPlugin(NotiflowInspectorPlugin())
-  .addMiddleware(LoggingMiddleware())
-  .register<ChatNotification>(/* ... */)
-  .start(); // plugins start listening automatically
-```
-
-**Best for:** new projects, standard providers, minimal code.
-
-### Combine Both
-
-```dart
-// Plugin for Firebase (automatic)
-NotiFlow.instance.addPlugin(NotiflowFirebasePlugin(/* ... */));
-
-// Headless for a custom WebSocket provider (manual)
-myWebSocket.onNotification.listen((data) {
-  NotiFlow.instance.dispatch(NotificationEvent(
-    source: NotificationSource.custom,
-    state: NotificationState.foreground,
-    payload: data,
-  ));
-});
-
-await NotiFlow.instance.start();
-```
+- [Firebase Integration](doc/cookbook/firebase_integration.md)
+- [OneSignal Integration](doc/cookbook/onesignal_integration.md)
+- [Local Notification Integration](doc/cookbook/local_notification_integration.md)
 
 ---
 
 ## 📚 API Reference
 
-### NotiFlow Instance
-
 ```dart
 // Singleton
-NotiFlow.instance
+Notiflow.instance
 
 // Isolated instance for testing
-final notiflow = NotiFlow.create();
+final notiflow = Notiflow.create();
 ```
 
-### Builder API (Fluent / Chainable)
+### Builder API
 
 ```dart
-NotiFlow.instance
-  .setNavigator(navigator)                   // set navigation adapter
-  .addMiddleware(middleware)                  // append middleware to pipeline
-  .removeMiddleware(middleware)               // remove specific middleware
-  .register<T>(                              // register notification type
-    matcher: (event) => bool,
-    parser: myParser,
-    handler: myHandler,
-  )
-  .setFallbackHandler(fallbackHandler);      // handle unmatched events
+Notiflow.instance
+  .setNavigator(navigator)
+  .addMiddleware(middleware)
+  .removeMiddleware(middleware)
+  .register<T>(matcher: ..., parser: ..., handler: ...)
+  .setFallbackHandler(fallbackHandler);
 ```
 
 ### Dispatch & Query
 
 ```dart
-await NotiFlow.instance.dispatch(event);     // process a notification event
+await Notiflow.instance.dispatch(event);
 
-final notification = NotiFlow.instance.resolve(event); // parse without dispatching
-final count = NotiFlow.instance.registeredCount;        // number of registered types
+final notification = Notiflow.instance.resolve(event);
+final count = Notiflow.instance.registeredCount;
+
+Notiflow.instance.reset();
 ```
 
-### Plugin Mode
+### Inspector
 
 ```dart
-NotiFlow.instance.addPlugin(plugin);         // register a plugin
-await NotiFlow.instance.start();             // install all plugins
-await NotiFlow.instance.stop();              // dispose all plugins
+Notiflow.instance.showInspector(); // debug overlay, like Alice
 ```
-
-### Lifecycle Management
-
-```dart
-NotiFlow.instance.reset();                   // clear all registrations, middleware, navigator
-```
-
----
-
-## 🏗️ Architecture
-
-```
-┌──────────────────────────────────────────────────────────┐
-│                    Provider Layer                         │
-│   Firebase   │   OneSignal   │   Local   │   Custom      │
-└──────┬───────┴───────┬───────┴─────┬─────┴───────┬──────┘
-       └───────────────┴─────────────┴─────────────┘
-                           │
-               ┌───────────▼───────────┐
-               │   NotificationEvent   │   ← Unified model
-               └───────────┬───────────┘
-                           │
-       ┌───────────────────▼───────────────────────┐
-       │              INotiFlow                     │
-       │                                            │
-       │  ┌────────────────────────────────────┐   │
-       │  │       Middleware Pipeline           │   │
-       │  │  Logging → Dedup → Auth → ...      │   │
-       │  │  [sealed: Continue | Stop]         │   │
-       │  └──────────────┬─────────────────────┘   │
-       │                 │                          │
-       │  ┌──────────────▼─────────────────────┐   │
-       │  │           Registry                  │   │
-       │  │  matcher → parser → typed notif     │   │
-       │  │  O(1) type-cache + linear fallback  │   │
-       │  └──────────────┬─────────────────────┘   │
-       │                 │                          │
-       │  ┌──────────────▼─────────────────────┐   │
-       │  │           Handler                   │   │
-       │  │  onForeground / onOpened / onLaunch │   │
-       │  └──────────────┬─────────────────────┘   │
-       │                 │                          │
-       │  ┌──────────────▼─────────────────────┐   │
-       │  │       Navigator Adapter             │   │
-       │  │  NavigatorKey / GoRouter / Custom    │   │
-       │  └────────────────────────────────────┘   │
-       └───────────────────────────────────────────┘
-```
-
-### Performance Design
-
-| Technique | What It Does |
-|---|---|
-| **Pre-built Chain** | Middleware chain built once on change, not per dispatch. Zero allocation on hot path. |
-| **Type-Cache Registry** | O(1) handler lookup after first encounter. Linear scan only for new types. |
-| **Ring Buffer Dedup** | Fixed-size circular buffer — bounded memory, O(1) insert & lookup. |
-| **Object Pool** | Reuses `_ChainNode` objects to minimize GC pressure under high notification volume. |
 
 ---
 
 ## 🧪 Testing
 
-NotiFlow is designed for testability from day one. Use `NotiFlow.create()` for isolated instances — no Firebase, no mocks, no device.
+Use `Notiflow.create()` for isolated instances — no Firebase, no mocks, no device.
 
 ```dart
-import 'package:flutter_test/flutter_test.dart';
-import 'package:notiflow/notiflow.dart';
+test('dispatches chat notification correctly', () async {
+  final notiflow = Notiflow.create();
+  final mockNavigator = MockNavigator();
 
-void main() {
-  test('dispatches chat notification correctly', () async {
-    final notiflow = NotiFlow.create();
-    final mockNavigator = MockNavigator();
-
-    notiflow
-      .setNavigator(mockNavigator)
-      .register<ChatNotification>(
-        matcher: (event) => event.payload['type'] == 'chat',
-        parser: ChatNotificationParser(),
-        handler: ChatNotificationHandler(),
-      );
-
-    await notiflow.dispatch(
-      NotificationEvent(
-        source: NotificationSource.firebase,
-        state: NotificationState.background,
-        payload: {'type': 'chat', 'chat_id': 'room-1', 'sender_name': 'Aisha'},
-      ),
-    );
-
-    expect(mockNavigator.lastRoute, '/chat');
-  });
-
-  test('resolve returns typed notification without dispatch', () {
-    final notiflow = NotiFlow.create();
-
-    notiflow.register<ChatNotification>(
+  notiflow
+    .setNavigator(mockNavigator)
+    .register<ChatNotification>(
       matcher: (event) => event.payload['type'] == 'chat',
       parser: ChatNotificationParser(),
       handler: ChatNotificationHandler(),
     );
 
-    final event = NotificationEvent(
+  await notiflow.dispatch(
+    NotificationEvent(
       source: NotificationSource.firebase,
-      state: NotificationState.foreground,
+      state: NotificationState.background,
       payload: {'type': 'chat', 'chat_id': 'room-1'},
-    );
+    ),
+  );
 
-    final result = notiflow.resolve(event);
-    expect(result, isA<ChatNotification>());
-    expect((result as ChatNotification).chatId, 'room-1');
-  });
-}
+  expect(mockNavigator.lastRoute, '/chat');
+});
 ```
-
-Run tests:
 
 ```bash
 flutter test
@@ -737,36 +470,26 @@ flutter test
 
 ## 🗺️ Roadmap
 
-| Version | Milestone | Scope |
-|---|---|---|
-| **v0.1.0** | Alpha | Core engine, Headless Mode, middleware pipeline, `NavigatorKeyAdapter`, unit tests |
-| **v0.2.0** | Beta | Plugin Mode, `notiflow_firebase`, `notiflow_inspector` (overlay + history), `notiflow_go_router` |
-| **v0.3.0** | — | `notiflow_auto_route`, Auth/Retry middleware, Inspector JSON export, DevTools extension alpha |
-| **v1.0.0** | Stable | API freeze, all plugins stable, full documentation, pub.dev publish |
-| **v1.1.0** | — | Inspector replay, performance profiling, notification grouping |
+| Version    | Scope                                                                       |
+| ---------- | --------------------------------------------------------------------------- |
+| **v0.1.0** | Core engine, middleware pipeline, `NavigatorKeyAdapter`, unit tests         |
+| **v0.2.0** | Inspector built-in (overlay + history), cookbook lengkap, extension helpers |
+| **v0.3.0** | AuthMiddleware, RetryMiddleware, Inspector JSON export                      |
+| **v1.0.0** | API freeze, full documentation, DevTools extension                          |
 
 ---
 
-## 🆚 Comparison
+## 🆚 Why NotiFlow?
 
-| Aspect | Manual (without NotiFlow) | With NotiFlow |
-|---|---|---|
-| Add new notification type | Edit existing file, risk breaking others | New file, register — don't touch existing code |
-| Routing bugs detected | At QA or production | At compile time (type safety) |
-| Unit test routing logic | Nearly impossible | Trivial — `NotiFlow.create()`, no provider mocks |
-| Handle 3 app states | Easy to miss one | Can't miss — abstract methods enforce all three |
-| Multi-provider support | Different setup per provider, duplicated logic | One `dispatch()` for all |
-| Debug failed notifications | `print()` and pray | Inspector UI + history *(coming soon)* |
-| Log all notifications | Copy-paste in every handler | `addMiddleware(LoggingMiddleware())` — one line |
-| Onboard new developer | Read 300+ lines of spaghetti | Read one handler — understand everything |
-| Swap navigation library | Rewrite every handler | Change one adapter |
-| Swap notification provider | Major refactor | Change one plugin |
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit issues, feature requests, or pull requests.
+|                            | Manual (without NotiFlow)                | With NotiFlow                                   |
+| -------------------------- | ---------------------------------------- | ----------------------------------------------- |
+| Add new notification type  | Edit existing file, risk breaking others | New file, register — don't touch existing code  |
+| Routing bugs detected      | At QA or production                      | At compile time (type safety)                   |
+| Unit test routing logic    | Nearly impossible                        | Trivial — `Notiflow.create()`                   |
+| Handle 3 app states        | Easy to miss one                         | Can't miss — abstract methods enforce all three |
+| Multi-provider support     | Different setup per provider             | One `dispatch()` for all                        |
+| Debug failed notifications | `print()` and pray                       | `showInspector()`                               |
+| Swap navigation library    | Rewrite every handler                    | Change one adapter                              |
 
 ---
 
@@ -778,8 +501,8 @@ NotiFlow is released under the [MIT License](LICENSE).
 
 <div align="center">
 
-**NotiFlow** — *Handle. Observe. Debug. Dispatch.*
+**NotiFlow** — _Handle. Observe. Debug. Dispatch._
 
-Built with ❤️ for the Flutter community.
+Single package. Full transparency. Zero magic.
 
 </div>
