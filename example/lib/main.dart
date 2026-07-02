@@ -34,11 +34,7 @@ void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Configure NotiFlow with Headless Mode
-  Notiflow.instance
-      .setNavigator(NavigatorKeyAdapter(navigatorKey: navigatorKey))
-      .addMiddleware(LoggingMiddleware(tag: 'NotiFlow'))
-      .addMiddleware(DeduplicationMiddleware())
-      .register(route: chatRoute);
+  // Notiflow.initialize(config);
 
   runApp(const NotiflowExampleApp());
 }
