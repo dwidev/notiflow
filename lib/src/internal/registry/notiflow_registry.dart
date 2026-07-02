@@ -2,6 +2,8 @@ import '../../../notiflow.dart';
 import '../../interfaces/notiflow_handler.dart';
 import '../../interfaces/notiflow_parser.dart';
 import '../core/notiflow_entry.dart';
+import '../routes/router_handler.dart';
+import '../routes/router_parser.dart';
 
 /// Internal registry — menyimpan semua entry dan mencari handler yang cocok.
 ///
@@ -11,6 +13,14 @@ import '../core/notiflow_entry.dart';
 /// - **Linear scan fallback**: jika tidak ada di cache, scan berurutan
 /// - **Unmodifiable view**: entries tidak bisa dimodifikasi dari luar
 final class _NotiflowRegistry {
+  _NotiflowRegistry(List<NotiflowRoute> routes) {
+    for (final route in routes) {
+      final parser = RouterParser(parser: route.parse);
+      final handler = RouterHandler(lifecycle: route.lifecycle);
+      _register(matcher: route.matcher, parser: parser, handler: handler);
+    }
+  }
+
   // Ordered list — urutan registrasi menentukan prioritas matching
   final List<NotiflowEntry> _entries = [];
 
@@ -20,7 +30,7 @@ final class _NotiflowRegistry {
 
   NotiflowHandler<NotiflowNotification>? _fallbackHandler;
 
-  void register<T extends NotiflowNotification>({
+  void _register<T extends NotiflowNotification>({
     required bool Function(NotificationEvent event) matcher,
     required NotiflowParser<T> parser,
     required NotiflowHandler<T> handler,

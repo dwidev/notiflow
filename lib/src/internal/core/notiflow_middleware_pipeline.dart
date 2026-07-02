@@ -1,7 +1,7 @@
 import '../../../notiflow.dart';
 import '../types.dart';
 
-typedef NotiflowDispatchEngine = _NotiflowDispatchEngine;
+typedef NotiflowMiddlewarePipeline = _NotiflowMiddlewarePipeline;
 
 /// Internal dispatch engine — menjalankan middleware pipeline.
 ///
@@ -11,8 +11,11 @@ typedef NotiflowDispatchEngine = _NotiflowDispatchEngine;
 /// - **Dirty flag**: rebuild chain hanya saat ada perubahan middleware
 /// - **No closure allocation per dispatch**: chain sudah di-compile ke
 ///   linked list of _ChainNode, bukan closure baru setiap call
-final class _NotiflowDispatchEngine {
-  final List<NotiflowMiddleware> _middlewares = [];
+final class _NotiflowMiddlewarePipeline {
+  final List<NotiflowMiddleware> _middlewares;
+
+  _NotiflowMiddlewarePipeline({List<NotiflowMiddleware> middlewares = const []})
+    : _middlewares = List.of(middlewares);
 
   _ChainNode? _headChain;
   bool _isDirty = true;
@@ -33,7 +36,7 @@ final class _NotiflowDispatchEngine {
   ///
   /// [terminal] is called after all middleware have been executed.
   /// if [_headChain] is null run terminal only
-  Future<NotiflowMiddlewareResult> run({
+  Future<NotiflowMiddlewareResult> execute({
     required NotificationEvent event,
     required NotiflowNext terminal,
   }) async {
@@ -85,10 +88,10 @@ final class _NotiflowDispatchEngine {
 }
 
 final class _ChainNode {
-  NotiflowMiddleware? _middleware;
-  NotiflowNext? _next;
+  late final NotiflowMiddleware _middleware;
+  late final NotiflowNext _next;
 
   Future<NotiflowMiddlewareResult> invoke(NotificationEvent event) {
-    return _middleware!.handle(event, _next!);
+    return _middleware.handle(event, _next);
   }
 }

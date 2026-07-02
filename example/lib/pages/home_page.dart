@@ -64,7 +64,7 @@ class HomePage extends StatelessWidget {
   }
 
   void _dispatchChat(NotificationState state) {
-    Notiflow.instance.dispatch(
+    Notiflow.dispatch(
       NotificationEvent(
         source: NotificationSource.firebase,
         state: state,
@@ -80,7 +80,7 @@ class HomePage extends StatelessWidget {
   }
 
   void _dispatchOrder(NotificationState state) {
-    Notiflow.instance.dispatch(
+    Notiflow.dispatch(
       NotificationEvent(
         source: NotificationSource.firebase,
         state: state,
@@ -90,7 +90,7 @@ class HomePage extends StatelessWidget {
   }
 
   void _dispatchPromo(NotificationState state) {
-    Notiflow.instance.dispatch(
+    Notiflow.dispatch(
       NotificationEvent(
         source: NotificationSource.oneSignal,
         state: state,
@@ -100,7 +100,7 @@ class HomePage extends StatelessWidget {
   }
 
   void _dispatchUnknown() {
-    Notiflow.instance.dispatch(
+    Notiflow.dispatch(
       NotificationEvent(
         source: NotificationSource('custom'),
         state: NotificationState.foreground,

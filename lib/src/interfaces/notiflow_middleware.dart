@@ -19,6 +19,10 @@ final class MiddlewareStop extends NotiflowMiddlewareResult {
   const MiddlewareStop({required this.reason});
 }
 
+final class MiddlewareFinish extends NotiflowMiddlewareResult {
+  const MiddlewareFinish([String reason = 'Finish the pipeline']);
+}
+
 /// Interface untuk middleware dalam NotiFlow pipeline.
 ///
 /// Middleware dieksekusi secara berurutan sesuai urutan [addMiddleware].

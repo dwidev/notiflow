@@ -1,20 +1,20 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:notiflow/src/internal/core/notiflow_dispatch_engine.dart';
+import 'package:notiflow/src/internal/core/notiflow_middleware_pipeline.dart';
 import 'package:notiflow/src/internal/types.dart';
 import 'package:notiflow/notiflow.dart';
 
 void main() {
-  group('NotiflowDispatchEngine', () {
-    late NotiflowDispatchEngine engine;
+  group('NotiflowMiddlewarePipelines', () {
+    late NotiflowMiddlewarePipeline pipeline;
 
     setUp(() {
-      engine = NotiflowDispatchEngine();
+      pipeline = NotiflowMiddlewarePipeline(middlewares: []);
     });
 
     test('should call terminal when no middleware', () async {
       var terminalCalled = false;
 
-      final result = await engine.run(
+      final result = await pipeline.execute(
         event: _FakeEvent.create(),
         terminal: (event) async {
           terminalCalled = true;
@@ -29,7 +29,7 @@ void main() {
     test('should execute middleware in order', () async {
       final calls = <String>[];
 
-      engine.addMiddleware(
+      pipeline.addMiddleware(
         _TestMiddleware((event, next) async {
           calls.add('A-before');
           final result = await next(event);
@@ -38,9 +38,9 @@ void main() {
         }),
       );
 
-      engine.addMiddleware(LoggingMiddleware());
+      pipeline.addMiddleware(LoggingMiddleware());
 
-      engine.addMiddleware(
+      pipeline.addMiddleware(
         _TestMiddleware((event, next) async {
           calls.add('B-before');
           final result = await next(event);
@@ -49,7 +49,7 @@ void main() {
         }),
       );
 
-      await engine.run(
+      await pipeline.execute(
         event: _FakeEvent.create(),
         terminal: (event) async {
           calls.add('terminal');
@@ -63,13 +63,13 @@ void main() {
     test('middleware can stop the chain', () async {
       var terminalCalled = false;
 
-      engine.addMiddleware(
+      pipeline.addMiddleware(
         _TestMiddleware((event, next) async {
           return MiddlewareStop(reason: 'stoping chain middlewaire');
         }),
       );
 
-      await engine.run(
+      await pipeline.execute(
         event: _FakeEvent.create(),
         terminal: (event) async {
           terminalCalled = true;
@@ -88,10 +88,10 @@ void main() {
         return next(event);
       });
 
-      engine.addMiddleware(middleware);
-      engine.removeMiddleware(middleware);
+      pipeline.addMiddleware(middleware);
+      pipeline.removeMiddleware(middleware);
 
-      await engine.run(
+      await pipeline.execute(
         event: _FakeEvent.create(),
         terminal: (event) async {
           calls.add('terminal');
@@ -105,16 +105,16 @@ void main() {
     test('clear should remove all middleware', () async {
       final calls = <String>[];
 
-      engine.addMiddleware(
+      pipeline.addMiddleware(
         _TestMiddleware((event, next) async {
           calls.add('middleware');
           return next(event);
         }),
       );
 
-      engine.clear();
+      pipeline.clear();
 
-      await engine.run(
+      await pipeline.execute(
         event: _FakeEvent.create(),
         terminal: (event) async {
           calls.add('terminal');
@@ -128,7 +128,7 @@ void main() {
     test('should rebuild after middleware changes', () async {
       final calls = <String>[];
 
-      await engine.run(
+      await pipeline.execute(
         event: _FakeEvent.create(),
         terminal: (event) async {
           calls.add('terminal');
@@ -136,14 +136,14 @@ void main() {
         },
       );
 
-      engine.addMiddleware(
+      pipeline.addMiddleware(
         _TestMiddleware((event, next) async {
           calls.add('middleware');
           return next(event);
         }),
       );
 
-      await engine.run(
+      await pipeline.execute(
         event: _FakeEvent.create(),
         terminal: (event) async {
           calls.add('terminal');
