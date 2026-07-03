@@ -10,7 +10,7 @@ class RouterParser<T extends NotiflowNotification> extends NotiflowParser<T> {
 
   @override
   T parse(NotificationEvent event) {
-    final result = parse(event);
-    return result;
+    final result = parser(event);
+    return result as T;
   }
 }
