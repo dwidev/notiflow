@@ -46,8 +46,8 @@ export 'src/interfaces/inotiflow.dart';
 export 'src/interfaces/notiflow_navigator.dart';
 
 // Navigator Adapters
-export 'src/adapters/navigator_key_adapter.dart';
-export 'src/adapters/custom_navigator_adapter.dart';
+export 'src/navigators/navigator_key_adapter.dart';
+export 'src/navigators/custom_navigator_adapter.dart';
 
 // Built-in Middleware
 export 'src/middleware/builtin_middleware.dart';
@@ -61,3 +61,6 @@ export 'src/internal/exceptions/parser_exception.dart';
 // routes
 export 'src/internal/routes/notiflow_route.dart';
 export 'src/internal/routes/notiflow_lifecycle.dart';
+
+// core
+export 'src/internal/core/notiflow_config.dart';

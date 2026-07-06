@@ -1,9 +1,7 @@
-import 'package:flutter/foundation.dart';
-import 'package:notiflow/src/internal/core/notiflow_config.dart';
-import 'package:notiflow/src/internal/core/notiflow_middleware_pipeline.dart';
-
 import '../../../notiflow.dart';
+import '../../inspector/inspector.dart';
 import '../registry/notiflow_registry.dart';
+import 'notiflow_middleware_pipeline.dart';
 
 class NotiflowRuntime {
   late final NotiflowRegistry _registry;
@@ -12,29 +10,33 @@ class NotiflowRuntime {
 
   void initialize(NotiflowConfig config) {
     _navigator = config.navigator;
-    _registry = NotiflowRegistry(config.routres);
+    _registry = NotiflowRegistry(config.routes);
     _pipeline = NotiflowMiddlewarePipeline(middlewares: config.middlewares);
   }
 
   Future<void> dispatch({required NotificationEvent event}) async {
-    final result = await _pipeline.execute(
-      event: event,
-      terminal: (processed) async {
-        final handled = await _registry.dispatch(processed, _navigator);
-        if (!handled) {
-          debugPrint(
-            '[NotiFlow] ⚠ No handler for: $event '
-            '(source: ${event.source.name})',
-          );
-        }
+    NotiflowInspector.run(event, () async {
+      final result = await _pipeline.execute(
+        event: event,
+        terminal: (processed) async {
+          final handled = await _registry.dispatch(processed, _navigator);
+          if (!handled) {
+            final msg =
+                '⚠️ [NotiFlow] No handler route for: $event '
+                '(source: ${event.source.name})';
+            NotiflowInspector.capture(msg);
+          }
 
-        return MiddlewareFinish();
-      },
-    );
+          return MiddlewareFinish();
+        },
+      );
 
-    if (result is MiddlewareStop) {
-      debugPrint('[NotiFlow] ⛔ Stopped — reason: ${result.reason}');
-    }
+      if (result is MiddlewareStop) {
+        NotiflowInspector.warning(
+          '[NotiFlow] ⛔ Stopped — reason: ${result.reason}',
+        );
+      }
+    });
   }
 
   void showInspector() {}

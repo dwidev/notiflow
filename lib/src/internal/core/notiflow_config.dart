@@ -8,14 +8,14 @@ import '../../../notiflow.dart';
 class NotiflowConfig {
   final NotiflowNavigator navigator;
   final List<NotiflowMiddleware> middlewares;
-  final List<NotiflowRoute> routres;
+  final List<NotiflowRoute> routes;
 
   final bool showInspector;
 
   const NotiflowConfig({
     required this.navigator,
     this.middlewares = const [],
-    required this.routres,
+    required this.routes,
     this.showInspector = true,
   });
 }

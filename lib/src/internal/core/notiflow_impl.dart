@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import '../exceptions/runtime_exeption.dart';
-import 'notiflow_config.dart';
 import 'notiflow_runtime.dart';
 
 import '../../../notiflow.dart';
