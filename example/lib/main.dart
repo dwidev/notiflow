@@ -1,5 +1,8 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:notiflow/notiflow.dart';
+import 'package:notiflow/src/internal/types.dart';
 
 import 'models/chat_notification.dart';
 import 'pages/home_page.dart';
@@ -18,18 +21,20 @@ final chatRoute = NotiflowRoute<ChatNotification>(
       type: event.payload['type'] as String,
     );
   },
-  lifecycle: NotiflowLifecycle(
-    onForeground: (event, navigator) async {
-      await navigator.push('/chat');
-    },
-    onLaunch: (event, navigator) async {
-      await navigator.push('/chat');
-    },
-    onOpened: (event, navigator) async {
-      await navigator.push('/chat');
-    },
-  ),
+  lifecycle: NotiflowLifecycle.push('/chat'),
 );
+
+class TestMiddlerware extends NotiflowMiddleware {
+  @override
+  Future<NotiflowMiddlewareResult> handle(
+    NotificationEvent event,
+    NotiflowNext next,
+  ) async {
+    final result = await next(event);
+    return result;
+  }
+}
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -37,6 +42,10 @@ void main() {
   final config = NotiflowConfig(
     navigator: NavigatorKeyAdapter(navigatorKey: navigatorKey),
     routes: [chatRoute],
+    middlewares: [
+      TestMiddlerware(),
+      LoggingMiddleware(tag: "EXAMPLE NOTIFLOW APP"),
+    ],
   );
   Notiflow.initialize(config);
 
