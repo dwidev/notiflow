@@ -1,10 +1,11 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
+
 import '../exceptions/runtime_exeption.dart';
 import 'notiflow_runtime.dart';
 
 import '../../../notiflow.dart';
 
-// Internal typedef — tidak di-export
 typedef NotiflowInstance = _NotiflowImpl;
 
 /// Implementasi internal [Notiflow].
@@ -31,9 +32,9 @@ final class _NotiflowImpl implements Notiflow {
     await runtime.dispatch(event: event);
   }
 
-  void showInspector() {
+  void showInspector(BuildContext context) {
     if (!kDebugMode) return;
-    runtime.showInspector();
+    runtime.showInspector(context);
   }
 
   @override

@@ -7,7 +7,17 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('NotiFlow Example')),
+      appBar: AppBar(
+        title: const Text('NotiFlow Example'),
+        actions: [
+          IconButton(
+            onPressed: () => Notiflow.showInspector(context),
+            icon: const Icon(Icons.bug_report_rounded),
+            tooltip: 'NotiFlow Inspector',
+          ),
+        ],
+      ),
+      floatingActionButton: const NotiflowInspectorButton(),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

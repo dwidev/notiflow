@@ -35,7 +35,10 @@ class DeduplicationMiddleware extends NotiflowMiddleware {
 
     if (lastSeen != null &&
         DateTime.now().difference(lastSeen) < rangeDuration) {
-      return const MiddlewareStop(reason: 'duplicate_notification');
+      return MiddlewareStop(
+        tag: runtimeType.toString(),
+        reason: 'duplicate_notification',
+      );
     }
 
     _seen[key] = DateTime.now();

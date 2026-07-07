@@ -15,8 +15,11 @@ final class MiddlewareContinue extends NotiflowMiddlewareResult {
 
 /// Pipeline dihentikan — handler tidak akan dipanggil.
 final class MiddlewareStop extends NotiflowMiddlewareResult {
+  /// for middleware name
+  final String tag;
   final String reason;
-  const MiddlewareStop({required this.reason});
+
+  const MiddlewareStop({required this.tag, required this.reason});
 }
 
 final class MiddlewareFinish extends NotiflowMiddlewareResult {

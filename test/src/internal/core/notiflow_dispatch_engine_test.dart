@@ -65,7 +65,7 @@ void main() {
 
       pipeline.addMiddleware(
         _TestMiddleware((event, next) async {
-          return MiddlewareStop(reason: 'stoping chain middlewaire');
+          return MiddlewareStop(reason: 'stoping chain middlewaire', tag: '');
         }),
       );
 

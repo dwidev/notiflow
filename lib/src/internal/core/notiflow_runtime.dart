@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 import '../../../notiflow.dart';
 import '../../inspector/inspector.dart';
 import '../registry/notiflow_registry.dart';
@@ -22,9 +24,9 @@ class NotiflowRuntime {
           final handled = await _registry.dispatch(processed, _navigator);
           if (!handled) {
             final msg =
-                '⚠️ [NotiFlow] No handler route for: $event '
+                '⚠️ [NotiFlow] No handler route for event: $event \n'
                 '(source: ${event.source.name})';
-            NotiflowInspector.capture(msg);
+            NotiflowInspector.captureWithWarning('Dispatcher', message: msg);
           }
 
           return MiddlewareFinish();
@@ -32,14 +34,19 @@ class NotiflowRuntime {
       );
 
       if (result is MiddlewareStop) {
-        NotiflowInspector.warning(
-          '[NotiFlow] ⛔ Stopped — reason: ${result.reason}',
+        NotiflowInspector.captureWithWarning(
+          'Dispatcher',
+          message: '[NotiFlow] ⛔ Stopped — reason: ${result.reason}',
         );
       }
     });
   }
 
-  void showInspector() {}
+  void showInspector(BuildContext context) {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const NotiflowInspectorPage()));
+  }
 
   void dispose() {
     _pipeline.clear();

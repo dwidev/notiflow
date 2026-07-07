@@ -64,3 +64,7 @@ export 'src/internal/routes/notiflow_lifecycle.dart';
 
 // core
 export 'src/internal/core/notiflow_config.dart';
+
+// Inspector UI
+export 'src/inspector/ui/inspector_page.dart';
+export 'src/inspector/ui/notiflow_inspector_widget.dart';

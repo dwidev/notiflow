@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:developer';
+
 import '../../../notiflow.dart';
 import '../../interfaces/notiflow_handler.dart';
 import '../../interfaces/notiflow_parser.dart';
@@ -42,13 +45,23 @@ base class _NotiflowEntry<T extends NotiflowNotification> {
     NotiflowNavigator navigator,
   ) async {
     final notification = parse(event);
-    switch (event.state) {
-      case NotificationState.foreground:
-        await handler.onForeground(notification, navigator);
-      case NotificationState.background:
-        await handler.onOpened(notification, navigator);
-      case NotificationState.launch:
-        await handler.onLaunch(notification, navigator);
-    }
+    final handlerFuture = switch (event.state) {
+      NotificationState.foreground => handler.onForeground(
+        notification,
+        navigator,
+      ),
+      NotificationState.background => handler.onOpened(notification, navigator),
+      NotificationState.launch => handler.onLaunch(notification, navigator),
+    };
+    unawaited(
+      handlerFuture.then(
+        (_) {
+          log('[NotiFlow] Handler complete');
+        },
+        onError: (error, stackTrace) {
+          log('[NotiFlow] Handler onError: $error, stackTrace : $stackTrace');
+        },
+      ),
+    );
   }
 }

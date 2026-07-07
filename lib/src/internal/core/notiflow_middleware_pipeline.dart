@@ -1,4 +1,5 @@
 import '../../../notiflow.dart';
+import '../../inspector/inspector.dart';
 import '../types.dart';
 
 typedef NotiflowMiddlewarePipeline = _NotiflowMiddlewarePipeline;
@@ -91,7 +92,15 @@ final class _ChainNode {
   late final NotiflowMiddleware _middleware;
   late final NotiflowNext _next;
 
-  Future<NotiflowMiddlewareResult> invoke(NotificationEvent event) {
-    return _middleware.handle(event, _next);
+  Future<NotiflowMiddlewareResult> invoke(NotificationEvent event) async {
+    NotiflowInspector.capture(_middleware.runtimeType.toString());
+    return _middleware.handle(event, _next).then((value) {
+      if (value is MiddlewareStop) {
+        NotiflowInspector.warning(value.reason);
+      } else {
+        NotiflowInspector.finish();
+      }
+      return value;
+    });
   }
 }

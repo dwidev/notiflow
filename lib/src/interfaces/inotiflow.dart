@@ -1,3 +1,5 @@
+import 'package:flutter/widgets.dart';
+
 import '../internal/core/notiflow_config.dart';
 import '../internal/core/notiflow_impl.dart';
 import '../internal/core/notiflow_runtime.dart';
@@ -50,6 +52,14 @@ abstract interface class Notiflow {
   /// [NotificationEvent] lalu dipanggil lewat method ini.
   static Future<void> dispatch(NotificationEvent event) async {
     await _instance.dispatch(event: event);
+  }
+
+  /// Show the NotiFlow inspector overlay (debug mode only).
+  ///
+  /// Requires a [BuildContext] that has an [Overlay] ancestor
+  /// (any context under [MaterialApp] or [WidgetsApp] works).
+  static void showInspector(BuildContext context) {
+    _instance.showInspector(context);
   }
 
   void dispose();
