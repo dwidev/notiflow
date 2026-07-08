@@ -93,14 +93,19 @@ final class _ChainNode {
   late final NotiflowNext _next;
 
   Future<NotiflowMiddlewareResult> invoke(NotificationEvent event) async {
-    NotiflowInspector.capture(_middleware.runtimeType.toString());
-    return _middleware.handle(event, _next).then((value) {
+    final name = _middleware.runtimeType.toString();
+    NotiflowInspector.capture('Middleware: $name');
+    try {
+      final value = await _middleware.handle(event, _next);
       if (value is MiddlewareStop) {
-        NotiflowInspector.warning(value.reason);
+        NotiflowInspector.warning('Stopped by $name — ${value.reason}');
       } else {
-        NotiflowInspector.finish();
+        NotiflowInspector.success('Passed');
       }
       return value;
-    });
+    } catch (e, st) {
+      NotiflowInspector.error(e, st);
+      rethrow;
+    }
   }
 }

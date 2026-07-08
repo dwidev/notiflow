@@ -31,11 +31,6 @@ abstract final class NotiflowInspector {
 
   static void capture(String name) => _recordSession?.capture(name);
 
-  static void captureWithWarning(String name, {required String message}) =>
-      _recordSession
-        ?..capture(name)
-        ..warning(message);
-
   static void success(String message) {
     _recordSession?.success(message);
   }

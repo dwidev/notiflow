@@ -1,8 +1,5 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:notiflow/notiflow.dart';
-import 'package:notiflow/src/internal/types.dart';
 
 import 'models/chat_notification.dart';
 import 'pages/home_page.dart';
@@ -14,6 +11,7 @@ final navigatorKey = GlobalKey<NavigatorState>();
 final chatRoute = NotiflowRoute<ChatNotification>(
   matcher: (event) => event.payload['type'] == 'chat',
   parse: (event) {
+    throw FormatException('chat_id must be string');
     return ChatNotification(
       id: event.id,
       receivedAt: event.receivedAt,

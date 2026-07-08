@@ -18,34 +18,20 @@ class NotiflowRuntime {
 
   Future<void> dispatch({required NotificationEvent event}) async {
     NotiflowInspector.run(event, () async {
-      final result = await _pipeline.execute(
+      await _pipeline.execute(
         event: event,
         terminal: (processed) async {
-          final handled = await _registry.dispatch(processed, _navigator);
-          if (!handled) {
-            final msg =
-                '⚠️ [NotiFlow] No handler route for event: $event \n'
-                '(source: ${event.source.name})';
-            NotiflowInspector.captureWithWarning('Dispatcher', message: msg);
-          }
-
+          await _registry.dispatch(processed, _navigator);
           return MiddlewareFinish();
         },
       );
-
-      if (result is MiddlewareStop) {
-        NotiflowInspector.captureWithWarning(
-          'Dispatcher',
-          message: '[NotiFlow] ⛔ Stopped — reason: ${result.reason}',
-        );
-      }
     });
   }
 
   void showInspector(BuildContext context) {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => const NotiflowInspectorPage()));
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const NotiflowInspectorPage()),
+    );
   }
 
   void dispose() {
