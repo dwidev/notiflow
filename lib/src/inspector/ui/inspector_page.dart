@@ -321,7 +321,7 @@ class _NotiflowInspectorPageState extends State<NotiflowInspectorPage> {
     return ListView.separated(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       itemCount: _filteredRecords.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 8),
+      separatorBuilder: (_, _) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
         final record = _filteredRecords[index];
         return InspectorRecordTile(

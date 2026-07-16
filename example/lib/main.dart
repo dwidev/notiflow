@@ -11,7 +11,6 @@ final navigatorKey = GlobalKey<NavigatorState>();
 final chatRoute = NotiflowRoute<ChatNotification>(
   matcher: (event) => event.payload['type'] == 'chat',
   parse: (event) {
-    throw FormatException('chat_id must be string');
     return ChatNotification(
       id: event.id,
       receivedAt: event.receivedAt,

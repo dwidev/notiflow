@@ -1,6 +1,5 @@
 import '../../../notiflow.dart';
 import '../../inspector/inspector.dart';
-import '../types.dart';
 
 typedef NotiflowMiddlewarePipeline = _NotiflowMiddlewarePipeline;
 

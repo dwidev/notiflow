@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:notiflow/src/internal/core/notiflow_middleware_pipeline.dart';
-import 'package:notiflow/src/internal/types.dart';
 import 'package:notiflow/notiflow.dart';
 
 void main() {

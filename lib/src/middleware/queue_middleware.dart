@@ -50,7 +50,7 @@ class QueueMiddleware extends NotiflowMiddleware {
 class _QueuedEvent {
   final NotificationEvent event;
   final NotiflowNext next;
-  final _completer = _SimpleCompleter<NotiflowMiddlewareResult>();
+  final _completer = Completer<NotiflowMiddlewareResult>();
 
   _QueuedEvent({required this.event, required this.next});
 
@@ -58,28 +58,5 @@ class _QueuedEvent {
 
   void complete(NotiflowMiddlewareResult result) {
     _completer.complete(result);
-  }
-}
-
-class _SimpleCompleter<T> {
-  T? _value;
-  final List<void Function(T)> _listeners = [];
-  bool _completed = false;
-
-  Future<T> get future async {
-    if (_completed) return _value as T;
-    await Future.doWhile(() async {
-      await Future.delayed(const Duration(milliseconds: 10));
-      return !_completed;
-    });
-    return _value as T;
-  }
-
-  void complete(T value) {
-    _value = value;
-    _completed = true;
-    for (final listener in _listeners) {
-      listener(value);
-    }
   }
 }
